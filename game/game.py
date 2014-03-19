@@ -57,7 +57,7 @@ class Grid(object):
     def _range_check(self, j, i):
         grid_j, grid_i = Grid._to_grid_indices(j, i)
         if not self._on_grid(grid_j, grid_i):
-            raise IndexError("invalid index (width = %d, height = %d): (%d, %d) " % (self.height, self.width, j, i))
+            raise IndexError("invalid index (height = %d, width = %d): (%d, %d) " % (self.height, self.width, j, i))
 
     def _on_grid(self, j, i):
         """Return True if passed grid indices are within the view grid"""
@@ -175,11 +175,13 @@ class Game(object):
         handling both row-wise and column-wise operations.
         """
         if direction in (Grid.LEFT, Grid.RIGHT):
-            max_ = self.grid.width
+            num_rows = self.grid.height
+            num_cols = self.grid.width
             get_ = self.grid.get
             set_ = self.grid.set
         elif direction in (Grid.UP, Grid.DOWN):
-            max_ = self.grid.height
+            num_rows = self.grid.width
+            num_cols = self.grid.height
             # transpose for up/down
             get_ = lambda j, i : self.grid.get(i, j)
             set_ = lambda j, i, it: self.grid.set(i, j, it)
@@ -191,14 +193,14 @@ class Game(object):
             start = 0
         elif direction in (Grid.RIGHT, Grid.DOWN):
             delta = -1
-            start = max_ - 1
+            start = num_cols - 1
         else:
             raise ValueError("Invalid direction: " + str(direction))
 
-        return start, max_, delta, get_, set_
+        return start, num_rows, num_cols, delta, get_, set_
 
-    @staticmethod
-    def _squash(start, max_, delta, get_, set_):
+
+    def _squash(self, start, num_rows, num_cols, delta, get_, set_):
         """Squash all tiles to one side of the grid.
 
         This transformation moves tiles as far to one side as they will go, but does not combine. eg:
@@ -209,12 +211,12 @@ class Game(object):
 
         for a left squash.
         """
-        for row in range(max_):
+        for row in range(num_rows):
             curr = last_empty = start
 
             # Iterates through row, keeping track of the empty spot farthest in the goal direction. Whenever we encounter
             # a non-empty cell, we move it to last_empty and make curr empty.
-            while 0 <= curr < max_ and 0 <= last_empty < max_:
+            while 0 <= curr < num_cols and 0 <= last_empty < num_cols:
                 if get_(row, last_empty) == Grid.EMPTY:
                     if get_(row, curr) > 0:
                         set_(row, last_empty, get_(row, curr))
@@ -225,8 +227,7 @@ class Game(object):
 
                 curr += delta
 
-    @staticmethod
-    def _combine(start, max_, delta, get_, set_):
+    def _combine(self, start, num_rows, num_cols, delta, get_, set_):
         """Combine adjacent tiles in the slam direction. May leave empty gaps behind, as it does not re-squash the grid.
 
         1 1 0 0        2 0 0 0
@@ -235,9 +236,9 @@ class Game(object):
 
         for a left combine.
         """
-        bounds = (lambda x: x < max_ - 1) if start == 0 else (lambda x: x > 0)
+        bounds = (lambda x: x < num_cols - 1) if start == 0 else (lambda x: x > 0)
 
-        for row in range(max_):
+        for row in range(num_rows):
             curr = start
 
             # Whenever we find two adjacent matching tiles, double curr cell and empty next cell.
