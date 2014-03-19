@@ -270,7 +270,10 @@ class Game(object):
 
     def _place_random(self):
         """Place initial_value in a random empty cell."""
-        i, j = random.choice(list(self.grid.available_cells()))
+        try:
+            i, j = random.choice(list(self.grid.available_cells()))
+        except IndexError: # available_cells() was empty
+            return
         self.grid.set(i, j, self.initial_value)
 
 
