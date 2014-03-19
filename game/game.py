@@ -119,7 +119,8 @@ class Grid(object):
 
         for row in self._rows():
             for cell in row:
-                s += "%5d" % cell
+                it = str(cell) if cell != Grid.EMPTY else "."
+                s += "%5s" % it
             s += "\n"
 
         return s
