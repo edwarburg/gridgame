@@ -11,3 +11,9 @@ To imitate the original, use:
 ```
 python main.py 4 4 2048 2
 ```
+
+or simply run without parameters:
+
+```
+python main.py
+```
